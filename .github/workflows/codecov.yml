@@ -46,6 +46,23 @@ jobs:
           sudo apt-get install lcov tclx
           make lcov USE_LIBBACKTRACE=yes
 
+      - name: Report adlist.c coverage (temporary)
+        run: |
+          awk '/^SF:.*\/src\/adlist\.c$/{p=1} p{print} p && /^end_of_record/{exit}' src/valkey.info > adlist.info
+          echo "adlist.c lines:     $(grep '^LH:' adlist.info | cut -d: -f2) of $(grep '^LF:' adlist.info | cut -d: -f2)"
+          echo "adlist.c functions: $(grep '^FNH:' adlist.info | cut -d: -f2) of $(grep '^FNF:' adlist.info | cut -d: -f2)"
+          echo "adlist.c branches:  $(grep '^BRH:' adlist.info | cut -d: -f2) of $(grep '^BRF:' adlist.info | cut -d: -f2)"
+          echo "uncovered lines: $(grep '^DA:' adlist.info | awk -F'[:,]' '$3==0{print $2}' | tr '\n' ' ')"
+          echo "uncovered functions: $(grep '^FNDA:0,' adlist.info | cut -d, -f2 | tr '\n' ' ')"
+
+      - name: Upload coverage data (temporary)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-info
+          path: |
+            src/valkey.info
+            adlist.info
+
       - name: Upload code coverage
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
